@@ -12,11 +12,14 @@
 #include <lcm/lcm.h>
 #include "exlcm_jtag_t.h"
 
-#define MESSAGE_SIZE 50
+#define MESSAGE_SIZE 65
 #define FLAGS 0
 
 // Port FRED!
 #define PORT 3733
+
+uint8_t jtag_address = 0;
+uint32_t jtag_data = 0;
 
 void error(const char *msg2){
     perror(msg2);
@@ -28,18 +31,11 @@ my_handler(const lcm_recv_buf_t *rbuf, const char * channel,
 	const exlcm_jtag_t * msg, void * user){
     int i;
     printf("Received message on channel \"%s\":\n", channel);
-    printf("  timestamp   = %lu\n", msg->timestamp);
-    printf("  position    = (%f, %f, %f)\n",
-            msg->position[0], msg->position[1], msg->position[2]);
-    printf("  orientation = (%f, %f, %f, %f)\n",
-            msg->orientation[0], msg->orientation[1], msg->orientation[2],
-            msg->orientation[3]);
-    printf("  ranges:");
-    for(i = 0; i < msg->num_ranges; i++)
-        printf(" %d", msg->ranges[i]);
-    printf("\n");
-    printf("  name        = '%s'\n", msg->name);
-    printf("  enabled     = %d\n", msg->enabled);
+    printf("  timestamp   = %u.%u\n", msg->seconds, msg->microseconds);
+    printf("  address     = %d\n", msg->address);
+    printf("  data        = %d\n", msg->data);
+    jtag_address = msg->address;
+    jtag_data = msg->data;
 }
 
 int main(int argc, char *argv[]){
@@ -74,50 +70,35 @@ int main(int argc, char *argv[]){
 	if (connect(conn,(struct sockaddr *)&server, sizeof(server)) < 0){ 
         error("Failed to connect to connect to server.");
     }
-
-    int ack, nack = 0;
-	    for (int i = 0; i < 256; ++i){
-		//uint8_t message[MESSAGE_SIZE] = {0x11, 0x22, 0x33, 0x44};
 	
-		uint32_t data = 55;
-		int data_size = 8;
+	while(1){
+		lcm_handle(lcm);
+
 		char message[MESSAGE_SIZE];
-		snprintf(message, MESSAGE_SIZE-1, "address.%d.data.%02x.size.%d.\n", i, data, data_size);
+		snprintf(message, MESSAGE_SIZE-1, "address.%d.data.%d.size.%d.\n", jtag_address, jtag_data, 32);
 		if (sendto(conn, message, MESSAGE_SIZE-1, FLAGS, (struct sockaddr *)&server, sizeof(struct sockaddr)) < 0) {
 			error("Failed to transmit message to server.");
 		}
 
 		int numbytes = 0;
-		while (((numbytes=recv(conn, message, MESSAGE_SIZE-1, 0)) == -1) && (++timeouts < 1000)) { /* loop to retry in case it timed out; added by davekw7x */ 
+		while (((numbytes=recv(conn, message, MESSAGE_SIZE-1, 0)) == -1) && (++timeouts < 1000)) {
 			perror("recv"); 
 			printf("After timeout #%d, trying again:\n", timeouts); 
 		} 
-		//printf("numbytes = %d\n", numbytes); 
-		message[numbytes] = '\0';
+
 		if(numbytes >= 1 ){
 			if(message[0] == 'a'){
-				ack++;
-				//printf("Received Ack!");
-				printf("Ack?: %s \n",message);
+				printf("Ack: %s \n", message);
 			}else{
-				nack++;
-				printf("Nack?: %s \n",message);
-				//printf("Something went wrong.");
+				printf("Nack: %s \n", message);
 			}
-		}else{
-			//printf("Received incomplete packet");
 		}
 	}
-	
-	while(1)
-		lcm_handle(lcm);
 
 	//ToDo: Add this as a debug option to check the link ->
 	//printf("nacks with %d and acks with %d\n", nack, ack);
 	
 	close(conn);
-
 	lcm_destroy(lcm);
-
 	return 0;
 }

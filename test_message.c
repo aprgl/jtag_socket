@@ -1,41 +1,40 @@
-// file: send_message.c
-//
-// LCM example program.
-//
-// compile with:
-//  $ gcc -o send_message send_message.c -llcm
-//
-// On a system with pkg-config, you can also use:
-//  $ gcc -o send_message send_message.c `pkg-config --cflags --libs lcm`
-
 #include <stdio.h>
 #include <lcm/lcm.h>
-
+#include <sys/time.h>
 #include "exlcm_jtag_t.h"
 
-int
-main(int argc, char ** argv){
-    lcm_t * lcm = lcm_create(NULL);
-    if(!lcm)
+int main(int argc, char ** argv){
+
+    uint8_t address = 0;
+    uint32_t data = 0;
+
+    if( argc != 3 ) {
+        printf("Nope. The useage is: %s [address] [data]\n", argv[0]);
         return 1;
+    }else{
+        address = atoi(argv[1]);
+        data = atoi(argv[2]);
+    }
 
-    exlcm_jtag_t my_data = {
-        .timestamp = 0,
-        .position = { 1, 2, 3 },
-        .orientation = { 1, 0, 0, 0 },
+    lcm_t * lcm = lcm_create(NULL);
+    if(!lcm){
+        printf("Could not create LCM channel.");
+        return 1;
+    }
+
+    // Timestamp
+    struct timeval tv;
+    gettimeofday(&tv,NULL);
+
+    exlcm_jtag_t test_packet = {
+        .seconds = tv.tv_sec, // seconds
+        .microseconds = tv.tv_usec, // microseconds
+        .address = address,
+        .data = data,
     };
-    int16_t ranges[15];
-    int i;
-    for(i = 0; i < 15; i++)
-        ranges[i] = i;
 
-    my_data.num_ranges = 15;
-    my_data.ranges = ranges;
-    my_data.name = "example string";
-    my_data.enabled = 1;
-
-    exlcm_jtag_t_publish(lcm, "JTAG", &my_data);
-
+    exlcm_jtag_t_publish(lcm, "JTAG", &test_packet);
+    
     lcm_destroy(lcm);
     return 0;
 }
