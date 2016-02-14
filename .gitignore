@@ -1,0 +1,27 @@
+# C Stuff #
+###################
+*.o
+
+# LCM Generated Files #
+###################
+exlcm_jtag_t.c
+exlcm_jtag_t.h
+
+# Complied Programs #
+###################
+jtag_debug
+test_message
+
+# Raw Inkscape Files #
+###################
+*.svg
+
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

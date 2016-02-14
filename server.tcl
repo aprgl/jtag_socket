@@ -82,9 +82,9 @@ proc closeport { } {
 	catch {close_device}
 }
 
-proc slam {jtag_addr jtag_data} {
+proc slam {jtag_addr jtag_data jtag_data_length} {
 	device_virtual_ir_shift -instance_index 0 -ir_value $jtag_addr
-	device_virtual_dr_shift -dr_value $jtag_data -instance_index 0 -length 8
+	device_virtual_dr_shift -dr_value $jtag_data -value_in_hex -instance_index 0 -length $jtag_data_length
 }
 
 # Send data to the Altera input FIFO buffer
@@ -128,18 +128,22 @@ proc server {chan addr port} {
 				set data [split $packet .]
 				set jtag_addr [lindex $data 1]
 				set jtag_data [lindex $data 3]
-				slam $jtag_addr $jtag_data
-				puts -nonewline $chan [format "ack setting channel to %03d" $jtag_addr]
+				set jtag_data_length [lindex $data 5]
+				slam $jtag_addr $jtag_data $jtag_data_length
+				puts -nonewline $chan [format "ack addr %03d data %08x with length %d" $jtag_addr $jtag_data $jtag_data_length]
 			} else {
-				puts -nonewline $chan "nack bad packet"
+				puts -nonewline $chan "nack bad packet $line"
 				puts "nack bad packet"
 			}
 		} else {
-			puts -nonewline $chan "nack"
+			if { catch { puts -nonewline $chan "nack"} } {
+				puts "broken pipe!"
+			}
 			puts "nack"
 			puts $numchars
 		}
     }
+    
     close $chan
 	puts "\nClosed connection"
 
