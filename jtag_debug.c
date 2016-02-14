@@ -47,12 +47,13 @@ int main(int argc, char *argv[]){
     }
 
     int ack, nack = 0;
-    for (int l = 0; l < 10; ++l){
+    for (int l = 0; l < 2; ++l){
 	    for (int i = 0; i < 256; ++i){
 			//uint8_t message[MESSAGE_SIZE] = {0x11, 0x22, 0x33, 0x44};
 		
+			uint32_t data = 55;
 			char message[MESSAGE_SIZE];
-			snprintf(message, sizeof message, "address.%d.data.000.\n", i);
+			snprintf(message, sizeof message, "address.%d.data.%#04x.\n", i, data);
 			if (sendto(conn, message, MESSAGE_SIZE-1, FLAGS, (struct sockaddr *)&server, sizeof(struct sockaddr)) < 0) {
 				error("Failed to transmit message to server.");
 			}
