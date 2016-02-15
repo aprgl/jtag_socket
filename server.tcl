@@ -82,19 +82,12 @@ proc closeport { } {
 	catch {close_device}
 }
 
-proc slam {jtag_addr jtag_data jtag_data_length} {
+proc write {jtag_addr jtag_data jtag_data_length} {
 	device_virtual_ir_shift -instance_index 0 -ir_value $jtag_addr
 	return [device_virtual_dr_shift -dr_value [format %08X $jtag_data] -value_in_hex -instance_index 0 -length $jtag_data_length]
 }
 
-# Send data to the Altera input FIFO buffer
-proc send {char} {
-	device_virtual_ir_shift -instance_index 0 -ir_value [eval jtag_packet.address] -no_captured_ir_value
-	device_virtual_dr_shift -dr_value [dec2bin $chr 8] -instance_index 0  -length 8 -no_captured_dr_value
-}
-
-# Read data in from the Altera output FIFO buffer
-proc recv {} {
+proc read {} {
 	# Check if there is anything to read
 	device_virtual_ir_shift -instance_index 0 -ir_value 2 -no_captured_ir_value
 	set tdi [device_virtual_dr_shift -dr_value 0000 -instance_index 0 -length 4]
@@ -129,16 +122,15 @@ proc server {chan addr port} {
 				set jtag_addr [lindex $data 1]
 				set jtag_data [lindex $data 3]
 				set jtag_data_length [lindex $data 5]
-				set from_jtag [slam $jtag_addr $jtag_data $jtag_data_length]
-				puts -nonewline $chan [format "ack addr %03d data %s" $jtag_addr $from_jtag]
+				set from_jtag [write $jtag_addr $jtag_data $jtag_data_length]
+				set jtag_formatted_data [format %08X $jtag_data]
+				puts -nonewline $chan [format "bck.address.%03d.data.%s" $jtag_addr $jtag_formatted_data]
 			} else {
 				puts -nonewline $chan "nack bad packet $line"
 				puts "nack bad packet"
 			}
 		} else {
-			if { catch { puts -nonewline $chan "nack"} } {
-				puts "broken pipe!"
-			}
+			puts -nonewline $chan "nack"
 			puts "nack"
 			puts $numchars
 		}

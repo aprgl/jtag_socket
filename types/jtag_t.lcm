@@ -3,6 +3,6 @@ package exlcm;
 struct jtag_t {
 	int32_t	seconds;
 	int32_t	microseconds;
-	int8_t	address;
+	byte	address;
 	int32_t	data;
 }

@@ -6,6 +6,7 @@
 ###################
 exlcm_jtag_t.c
 exlcm_jtag_t.h
+exlcm/*
 
 # Complied Programs #
 ###################

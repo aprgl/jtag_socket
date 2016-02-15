@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <netinet/in.h>
 #include <stdlib.h> // for exit
 #include <unistd.h>
@@ -41,7 +42,7 @@ my_handler(const lcm_recv_buf_t *rbuf, const char * channel,
 int main(int argc, char *argv[]){
 
 	lcm_t * lcm = lcm_create(NULL);
-   if(!lcm)
+	if(!lcm)
 		error("Faied to create LCM channel!");
     exlcm_jtag_t_subscribe(lcm, "JTAG", &my_handler, NULL);
 
@@ -84,19 +85,60 @@ int main(int argc, char *argv[]){
 		while (((numbytes=recv(conn, message, MESSAGE_SIZE-1, 0)) == -1) && (++timeouts < 1000)) {
 			perror("recv"); 
 			printf("After timeout #%d, trying again:\n", timeouts); 
-		} 
+		}
+
+		uint address = 0;
+		uint data = 0;
 
 		if(numbytes >= 1 ){
-			if(message[0] == 'a'){
+			if(message[0] == 'b'){
 				printf("Ack: %s \n", message);
+				int delim = 0;
+				for(int i=0; i<MESSAGE_SIZE; i++){
+					if(message[i] == '.'){
+						delim++;
+						int j=1;
+						char buff[10];
+						memset(&buff, '\0', 10);
+						while((message[i+j] != '.') & (j+i<(MESSAGE_SIZE-1))){
+							j++;
+						}
+						strncpy(buff, &message[i+1], j);
+						//printf("Here's one of the things: %s and %d\n", buff, j);
+						if(delim == 2){
+							sscanf(buff, "%u", &address);
+							printf("Here's the address: %u\n", address);
+						}
+						if(delim == 4){
+							data = strtol(buff, NULL, 16);
+							printf("Here's the data: %s and %08x\n", buff, data);
+						}
+					}
+				}
+
+				// Timestamp
+			    struct timeval tv;
+			    gettimeofday(&tv,NULL);
+
+			    exlcm_jtag_t test_packet = {
+			        .seconds = tv.tv_sec, // seconds
+			        .microseconds = tv.tv_usec, // microseconds
+			        .address = address,
+			        .data = data,
+			    };
+
+			    exlcm_jtag_t_publish(lcm, "JTAG", &test_packet);
+			    memset(&message, '\0', MESSAGE_SIZE);
+
 			}else{
 				printf("Nack: %s \n", message);
 			}
+
 		}
 	}
 
 	//ToDo: Add this as a debug option to check the link ->
-	//printf("nacks with %d and acks with %d\n", nack, ack);
+	//printf("nacks with %d and acks with %d\n", nack, ack);	
 	
 	close(conn);
 	lcm_destroy(lcm);
