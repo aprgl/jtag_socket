@@ -44,7 +44,7 @@ int main(int argc, char *argv[]){
 	lcm_t * lcm = lcm_create(NULL);
 	if(!lcm)
 		error("Faied to create LCM channel!");
-    exlcm_jtag_t_subscribe(lcm, "JTAG", &my_handler, NULL);
+    exlcm_jtag_t_subscribe(lcm, "TO_JTAG", &my_handler, NULL);
 
  	struct timeval tv;
 	int timeouts = 0; 
@@ -127,11 +127,11 @@ int main(int argc, char *argv[]){
 			        .data = data,
 			    };
 
-			    exlcm_jtag_t_publish(lcm, "JTAG", &test_packet);
+			    exlcm_jtag_t_publish(lcm, "FROM_JTAG", &test_packet);
 			    memset(&message, '\0', MESSAGE_SIZE);
 
 			}else{
-				printf("Nack: %s \n", message);
+				printf("Nack!\n");
 			}
 
 		}

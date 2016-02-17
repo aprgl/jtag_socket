@@ -33,7 +33,7 @@ int main(int argc, char ** argv){
         .data = data,
     };
 
-    exlcm_jtag_t_publish(lcm, "JTAG", &test_packet);
+    exlcm_jtag_t_publish(lcm, "TO_JTAG", &test_packet);
     
     lcm_destroy(lcm);
     return 0;

@@ -16,16 +16,27 @@ class bcolors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
 
-def my_handler(channel, data):
+def rec_handler(channel, data):
     msg = jtag_t.decode(data)
     #print("Message on channel \"%s\"" % channel)
-    print (bcolors.OKBLUE + "\x1b[0G\x1b[2K< %u.%u\033[93m" \
+    print (bcolors.OKBLUE + "\x1b[0G\x1b[2K<< %u.%u\033[93m" \
     	" Address[%u, 0x%02X]\033[92m Data[%u, 0x%08X]\033[0m" \
     	% (msg.seconds, msg.microseconds, msg.address, msg.address, \
     		msg.data , msg.data))
 
-lc = lcm.LCM()
-subscription = lc.subscribe("JTAG", my_handler)
+lc_rec = lcm.LCM()
+subscription = lc_rec.subscribe("FROM_JTAG", rec_handler)
+
+def send_handler(channel, data):
+    msg = jtag_t.decode(data)
+    #print("Message on channel \"%s\"" % channel)
+    print (bcolors.OKBLUE + "\x1b[0G\x1b[2K>> %u.%u\033[93m" \
+        " Address[%u, 0x%02X]\033[92m Data[%u, 0x%08X]\033[0m" \
+        % (msg.seconds, msg.microseconds, msg.address, msg.address, \
+            msg.data , msg.data))
+
+lc_send = lcm.LCM()
+subscription = lc_send.subscribe("TO_JTAG", send_handler) 
 
 def send_message(a, b):
     msg = jtag_t()
@@ -34,7 +45,7 @@ def send_message(a, b):
     msg.microseconds = int(microseconds-msg.seconds*1000)
     msg.address = int(a)
     msg.data = int(b)
-    lc.publish("JTAG", msg.encode())
+    lc_send.publish("TO_JTAG", msg.encode())
 
 def yellow( str ):
    print (bcolors.WARNING + str + bcolors.ENDC)
@@ -74,9 +85,12 @@ def blank_current_readline():
 def noisy_thread():
     while True:
         blank_current_readline()
-        rfds, b, c = select.select([lc.fileno()], [], [], 0.001)
+        rfds, b, c = select.select([lc_rec.fileno()], [], [], 0.001)
         if rfds:
-            lc.handle()
+            lc_rec.handle()
+        rfds, b, c = select.select([lc_send.fileno()], [], [], 0.001)
+        if rfds:
+            lc_send.handle()
         sys.stdout.write('> ' + readline.get_line_buffer())
         sys.stdout.flush() # Needed or text doesn't show until key press
 
@@ -87,12 +101,12 @@ if __name__ == '__main__':
             s = raw_input('> ')
             values = s.split()
             if (len(values) == 2):
-            	print ("> Command [%s %s] Sent" % (values[0], values[1]))
                 send_message(values[0], values[1])
             else:
                 print("Nope. I need two arguements [address] and " \
                 	"[data] I recieved:\"" + s + "\"")
         except KeyboardInterrupt:
             red("\nFred teminal is offline.\n")
-            lc.unsubscribe(subscription)
+            lc_rec.unsubscribe(subscription)
+            lc_send.unsubscribe(subscription)
             sys.exit()

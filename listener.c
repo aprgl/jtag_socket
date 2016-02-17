@@ -18,7 +18,7 @@ int main(int argc, char ** argv){
     if(!lcm)
         return 1;
 
-    exlcm_jtag_t_subscribe(lcm, "JTAG", &my_handler, NULL);
+    exlcm_jtag_t_subscribe(lcm, "FROM_JTAG", &my_handler, NULL);
 
     while(1)
         lcm_handle(lcm);
