@@ -123,8 +123,7 @@ proc server {chan addr port} {
 				set jtag_data [lindex $data 3]
 				set jtag_data_length [lindex $data 5]
 				set from_jtag [write $jtag_addr $jtag_data $jtag_data_length]
-				set jtag_formatted_data [format %08X $jtag_data]
-				puts -nonewline $chan [format "bck.address.%03d.data.%s" $jtag_addr $jtag_formatted_data]
+				puts -nonewline $chan [format "bck.address.%03d.data.%s" $jtag_addr $from_jtag]
 			} else {
 				puts -nonewline $chan "nack bad packet $line"
 				puts "nack bad packet"

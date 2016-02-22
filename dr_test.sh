@@ -1,6 +1,6 @@
 #!/bin/bash
-for i in `seq 1 10000`;
+for i in `seq 1 100000`;
 do
 ./test_message 0 $i
-sleep .25
+sleep .00001
 done
