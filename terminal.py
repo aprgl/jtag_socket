@@ -5,6 +5,8 @@ import lcm
 import time,readline,thread, math
 import sys,struct,fcntl,termios
 import ctypes
+import csv
+
 from exlcm import jtag_t
 
 class bcolors:
@@ -16,13 +18,62 @@ class bcolors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
 
+global data_count
+
 def rec_handler(channel, data):
+    global data_count
     msg = jtag_t.decode(data)
     #print("Message on channel \"%s\"" % channel)
     print (bcolors.OKBLUE + "\x1b[0G\x1b[2K<< %u.%u\033[93m" \
     	" Address[%u, 0x%02X]\033[92m Data[%u, 0x%08X]\033[0m" \
     	% (msg.seconds, msg.microseconds, msg.address, msg.address, \
     		msg.data , msg.data))
+
+    if(msg.address == 9):
+        # Closed Loop Debugging
+        motor_position = msg.data%21845
+        motor_position_cmd = motor_position/21.333
+        print ("Loop Debugging: %u, %u, %u" % (msg.data, motor_position, motor_position_cmd))
+
+        data_count = data_count + 1
+        with open('resolver_log.csv', 'a') as csvfile:
+            logwriter = csv.writer(csvfile, delimiter=' ',
+                            quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            time = msg.seconds + (msg.microseconds*pow(10,-6))
+            logwriter.writerow([data_count, msg.data])
+
+    elif(msg.address == 16):
+        # Closed Loop Debugging
+        
+        data_count = data_count + 1
+        with open('delta_log.csv', 'a') as csvfile:
+            logwriter = csv.writer(csvfile, delimiter=' ',
+                            quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            time = msg.seconds + (msg.microseconds*pow(10,-6))
+            logwriter.writerow([data_count, msg.data])
+
+    elif(msg.address == 17):
+        # Closed Loop Debugging
+        
+        data_count = data_count + 1
+        with open('torque_log.csv', 'a') as csvfile:
+            logwriter = csv.writer(csvfile, delimiter=' ',
+                            quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            time = msg.seconds + (msg.microseconds*pow(10,-6))
+            logwriter.writerow([data_count, msg.data])
+
+    else:
+        with open('command_log.csv', 'a') as csvfile:
+            logwriter = csv.writer(csvfile, delimiter=' ',
+                            quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            time = msg.seconds + (msg.microseconds*pow(10,-6))
+            logwriter.writerow([data_count, msg.address, msg.data])
+
+    with open('full_log.csv', 'a') as csvfile:
+            logwriter = csv.writer(csvfile, delimiter=' ',
+                            quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            time = msg.seconds + (msg.microseconds*pow(10,-6))
+            logwriter.writerow([data_count, msg.address, msg.data])
 
 lc_rec = lcm.LCM()
 subscription = lc_rec.subscribe("FROM_JTAG", rec_handler)
@@ -95,6 +146,7 @@ def noisy_thread():
         sys.stdout.flush() # Needed or text doesn't show until key press
 
 if __name__ == '__main__':
+    data_count = 0;
     thread.start_new_thread(noisy_thread, ())
     while True:
     	try:
