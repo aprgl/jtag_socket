@@ -31,8 +31,9 @@ def rec_handler(channel, data):
 
     if(msg.address == 9):
         # Closed Loop Debugging
+
         motor_position = msg.data%21845
-        motor_position_cmd = motor_position/21.333
+        motor_position_cmd = 1024-(motor_position/21845.0)*1024.0
         print ("Loop Debugging: %u, %u, %u" % (msg.data, motor_position, motor_position_cmd))
 
         data_count = data_count + 1
@@ -57,6 +58,34 @@ def rec_handler(channel, data):
         
         data_count = data_count + 1
         with open('torque_log.csv', 'a') as csvfile:
+            logwriter = csv.writer(csvfile, delimiter=' ',
+                            quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            time = msg.seconds + (msg.microseconds*pow(10,-6))
+            logwriter.writerow([data_count, msg.data])
+
+    elif(msg.address == 18):
+        # Closed Loop Debugging
+        
+        data_count = data_count + 1
+        with open('u_log.csv', 'a') as csvfile:
+            logwriter = csv.writer(csvfile, delimiter=' ',
+                            quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            time = msg.seconds + (msg.microseconds*pow(10,-6))
+            logwriter.writerow([data_count, msg.data])
+    elif(msg.address == 20):
+        # Closed Loop Debugging
+        
+        data_count = data_count + 1
+        with open('v_log.csv', 'a') as csvfile:
+            logwriter = csv.writer(csvfile, delimiter=' ',
+                            quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            time = msg.seconds + (msg.microseconds*pow(10,-6))
+            logwriter.writerow([data_count, msg.data])
+    elif(msg.address == 22):
+        # Closed Loop Debugging
+        
+        data_count = data_count + 1
+        with open('w_log.csv', 'a') as csvfile:
             logwriter = csv.writer(csvfile, delimiter=' ',
                             quotechar='|', quoting=csv.QUOTE_MINIMAL)
             time = msg.seconds + (msg.microseconds*pow(10,-6))
