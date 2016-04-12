@@ -2,6 +2,10 @@
 ###################
 *.o
 
+# Testing Output #
+###################
+*.csv
+
 # LCM Generated Files #
 ###################
 exlcm_jtag_t.c

@@ -91,6 +91,24 @@ def rec_handler(channel, data):
             time = msg.seconds + (msg.microseconds*pow(10,-6))
             logwriter.writerow([data_count, msg.data])
 
+    elif(msg.address == 26):
+        # Position Loop Debugging
+        data_count = data_count + 1
+        with open('error_log.csv', 'a') as csvfile:
+            logwriter = csv.writer(csvfile, delimiter=' ',
+                            quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            time = msg.seconds + (msg.microseconds*pow(10,-6))
+            logwriter.writerow([data_count, msg.data])
+
+    elif(msg.address == 31):
+        # PID Debugging
+        data_count = data_count + 1
+        with open('pid_log.csv', 'a') as csvfile:
+            logwriter = csv.writer(csvfile, delimiter=' ',
+                            quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            time = msg.seconds + (msg.microseconds*pow(10,-6))
+            logwriter.writerow([data_count, msg.data])
+
     else:
         with open('command_log.csv', 'a') as csvfile:
             logwriter = csv.writer(csvfile, delimiter=' ',
