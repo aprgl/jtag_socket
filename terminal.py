@@ -109,6 +109,15 @@ def rec_handler(channel, data):
             time = msg.seconds + (msg.microseconds*pow(10,-6))
             logwriter.writerow([data_count, msg.data])
 
+    elif(msg.address == 37):
+        # Absolute Position Debugging
+        data_count = data_count + 1
+        with open('absolute_log.csv', 'a') as csvfile:
+            logwriter = csv.writer(csvfile, delimiter=' ',
+                            quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            time = msg.seconds + (msg.microseconds*pow(10,-6))
+            logwriter.writerow([data_count, msg.data])
+
     else:
         with open('command_log.csv', 'a') as csvfile:
             logwriter = csv.writer(csvfile, delimiter=' ',
