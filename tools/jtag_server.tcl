@@ -1,4 +1,4 @@
-#!/home/shaun/altera_lite/15.1/quartus/bin/quartus_stp -t
+#!quartus_stp -t
 #  
 #	Virtual JTAG interface designed to operate with a struct style
 #	messaging protocol between a LCM channel and the Altera USB Blaster.
