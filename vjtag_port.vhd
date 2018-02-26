@@ -9,7 +9,7 @@ library vjtag;
 --============================================================================
 -- Generate a vuirt JTAG block to allow control and data to flow from
 -- the FPGA under development.
--- Version: 0.0.0 Initial Commit - half dead time block - compiles -Shaun
+-- Version: 0.0.0 Initial Commit - vjtag port - compiles -Shaun
 ------------------------------------------------------------------------------
 
 entity vjtag_port is
