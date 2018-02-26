@@ -16,7 +16,7 @@
 #define MESSAGE_SIZE 65
 #define FLAGS 0
 
-// Port FRED!
+// Port for JTAG!
 #define PORT 3733
 
 uint8_t jtag_address = 0;
