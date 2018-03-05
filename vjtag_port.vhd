@@ -22,7 +22,7 @@ end entity vjtag_port;
 
 architecture rtl of vjtag_port is
     
-		signal tdi_sig, tdo_sig, tck, sdr_valid, ir_solid, load_dr	:	std_logic;
+		signal tdi_sig, tdo_sig, tck, sdr_valid, ir_solid, dr_solid, data_ready, load_dr	:	std_logic;
 		signal ir, ir_sig	: std_logic_vector(7 downto 0);
 		signal dr	: std_logic_vector(31 downto 0) := X"87654321";
 
@@ -36,6 +36,7 @@ architecture rtl of vjtag_port is
 		TCK		=> tck,
 		IR_IN	=> ir_sig,
 		virtual_state_uir => ir_solid,
+		virtual_state_udr => data_ready,
 		virtual_state_sdr => sdr_valid,
 		virtual_state_cdr => load_dr
 	 );
@@ -85,7 +86,6 @@ architecture rtl of vjtag_port is
 --==============================================
 -- Stateless Signals
 --==============================================
-	dr_out <= ir(7 downto 0);
-	ir_out <= dr(31 downto 0);
+	ir_out <= ir(7 downto 0);
 
 end architecture rtl;

@@ -3,5 +3,5 @@ for i in `seq 1 255`;
 do
 ../send_message $i 0
 echo $i
-sleep .01
+sleep .001
 done
