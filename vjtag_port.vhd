@@ -22,13 +22,30 @@ end entity vjtag_port;
 
 architecture rtl of vjtag_port is
     
-		signal tdi_sig, tdo_sig, tck, sdr_valid, ir_solid, dr_solid, data_ready, load_dr	:	std_logic;
-		signal ir, ir_sig	: std_logic_vector(7 downto 0);
-		signal dr	: std_logic_vector(31 downto 0) := X"87654321";
+	signal tdi_sig, tdo_sig, tck, sdr_valid, ir_solid, dr_solid, data_ready, load_dr	:	std_logic;
+	signal ir, ir_sig	: std_logic_vector(7 downto 0);
+	signal dr	: std_logic_vector(31 downto 0) := X"87654321";
+
+	-- Memory --
+	type mem is array(0 to 31) OF std_logic_vector(31 downto 0);
+	signal ram_block : mem;
+	signal write_address, read_address : std_logic_vector(4 downto 0);
+	signal data, q :std_logic_vector(31 downto 0);
+	signal we : std_logic;
 
     begin
 	 
--- The instantiation will create connect this block to the JTAG chain
+	-- Instantiate RAM Block for testing
+	mem_proc: process (tck) begin
+		if (rising_edge(tck)) then
+			if (we = '1') then
+				ram_block(write_address) <= data;
+			end if;
+			q <= ram_block(read_address);
+		end if;
+	end process;
+	 
+	-- The instantiation will create connect this block to the JTAG chain
 	virtual_jtag : entity vjtag.vjtag(rtl)
 	port map(
 		TDI 	=> tdi_sig,
@@ -64,7 +81,7 @@ architecture rtl of vjtag_port is
 				elsif(ir = X"02") then
 					dr <= X"c0ffee" & ir;
 				else
-					dr <= X"00000000";
+					dr <= q;
 				end if;
 			elsif (sdr_valid = '1') then
 				dr <= (tdi_sig & dr(31 downto 1));
@@ -75,10 +92,13 @@ architecture rtl of vjtag_port is
 	-- Virtual JTAG CPU -> FPGA Data
 	data_in_proc: process (data_ready) begin
 		if (data_ready = '1') then
-			if(ir = X"01") then
-				dr_out <= dr;
+			if(ir(0) = '1') then
+				write_address <= ir(5 downto 1);
+				data <= dr;
+				we <= '1';
 			else
-				dr_out <= X"00000055";
+				read_address <= ir(5 downto 1);
+				we <= '0';
 			end if;
 		end if;
 	end process;
